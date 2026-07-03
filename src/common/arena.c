@@ -48,7 +48,7 @@ inline void* arena_alloc(Arena* a, size_t size)
     //aling to 8 bytes
     size = (size + 7) & ~((size_t)7);
 
-    if (a->current->offset + size >= a->current->capacity)
+    if (a->current->offset + size > a->current->capacity)
     {
         ArenaBlock* block = create_new_arena_block(ARENA_BLOCK_SIZE);
         if (!block)
