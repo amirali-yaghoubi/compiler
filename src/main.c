@@ -5,16 +5,19 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "lexer.h"
+#include "common/arena.h"
+#include "frontend/lexer.h"
 
 
-char* read_file(const char* path);
+char* read_file(Arena* a, const char* path);
 
 int main()
 {
+    Arena a;
+    arena_init(&a);
     const char* source_path = "src/test_source.txt";
 
-    char* source = read_file(source_path);
+    char* source = read_file(&a, source_path);
     if (!source)
     {
         fprintf(stderr, "Failed to read %s\n", source_path);
@@ -34,7 +37,7 @@ int main()
 
     while (1)
     {
-    Token token = lex_next_token(&lexer);
+    Token token = get_next_token(&lexer);
 
     if (token.type == TOK_EOF) break;
     
@@ -49,13 +52,13 @@ int main()
     }
     printf("\n----------------\n\n");
 
-    free(source);
+    arena_free(&a);
 
     return 0;
 }
 
 
-char* read_file(const char* path)
+char* read_file(Arena* a, const char* path)
 {
     FILE* file = fopen(path, "rb");
     if (!file)
@@ -75,11 +78,11 @@ char* read_file(const char* path)
     size_t size = (size_t)size_temp;
     rewind(file);
 
-    char* buffer = malloc(size + 1);
+    char* buffer = arena_alloc(a, size + 1);
     if (!buffer)
     {
         fclose(file);
-        fprintf(stderr, "Error in allocating memory\n");
+        fprintf(stderr, "Error in allocating memory from arena\n");
         return NULL;
     }
 
