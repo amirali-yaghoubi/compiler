@@ -18,3 +18,8 @@ Early development(front end). Not stable.
 
 ## Build
 (to be added)
+
+## Development Environment
+- Built entirely on **Debian 12 (Termux/proot-distro)**
+- Device: **Xiaomi Poco X3 Pro**
+- No external keyboard — everything typed on the virtual keyboard
