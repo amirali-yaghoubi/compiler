@@ -1,0 +1,71 @@
+#pragma once
+
+#include "lexer.h"
+#include "common/arena.h"
+#include <stdlib.h>
+
+
+
+typedef struct {
+    Lexer* lexer;
+    Token current;
+} Parser;
+
+
+typedef enum {
+    AST_PROGRAM,
+
+    //Statment
+    AST_STMT_IF,
+    AST_STMT_BLOCK,
+    AST_STMT_RETURN,
+    AST_STMT_VARDECL,
+    AST_STMT_EXPR,
+
+    //Expression
+    AST_EXPR_BINARY,
+    AST_EXPR_UNARY,
+    AST_EXPR_CALL,
+    AST_EXPR_NUMBER,
+    AST_EXPR_IDENT
+} ASTType;
+
+
+typedef struct ASTNode {
+    ASTType type;
+} ASTNode;
+
+
+typedef struct {
+    ASTNode base;
+
+    ASTNode** statements;
+    int count;
+} ASTProgram;
+
+
+typedef struct {
+    ASTNode base;
+    Token token;
+} ASTNumberExpr;
+
+
+typedef struct {
+    ASTNode base;
+    Token token;
+} ASTIdentExpr;
+
+
+typedef struct {
+    ASTNode base;
+
+    ASTNode* lhs;
+    ASTNode* rhs;
+
+    Token op;
+} ASTBinaryExpr;
+
+
+const char *ASTTypeStr(ASTType type);
+void parser_init(Parser* p, Lexer* l);
+ASTNode* parse_primary(Arena* a, Parser* p);

@@ -1,0 +1,103 @@
+#include "frontend/parser.h"
+#include "frontend/lexer.h"
+#include "common/arena.h"
+#include <stdio.h>
+#include <stdbool.h>
+
+
+
+
+const char* ASTTypeStr(ASTType type) {
+    switch (type) {
+        case AST_PROGRAM:        return "AST_PROGRAM";
+        case AST_STMT_IF:        return "AST_STMT_IF";
+        case AST_STMT_BLOCK:     return "AST_STMT_BLOCK";
+        case AST_STMT_RETURN:    return "AST_STMT_RETURN";
+        case AST_STMT_VARDECL:   return "AST_STMT_VARDECL";
+        case AST_STMT_EXPR:      return "AST_STMT_EXPR";
+        case AST_EXPR_BINARY:    return "AST_EXPR_BINARY";
+        case AST_EXPR_UNARY:     return "AST_EXPR_UNARY";
+        case AST_EXPR_CALL:      return "AST_EXPR_CALL";
+        case AST_EXPR_NUMBER:    return "AST_EXPR_NUMBER";
+        case AST_EXPR_IDENT:     return "AST_EXPR_IDENT";
+        default:                 return "INVALID_AST_TYPE";
+    }
+}
+
+
+void parser_init(Parser* p, Lexer* l)
+{
+    p->lexer = l;
+    p->current = get_next_token(l);
+}
+
+
+static inline Token advance(Parser* p)
+{
+    Token old = p->current;
+    p->current = get_next_token(p->lexer);
+    return old;
+}
+
+
+static inline bool check(Parser* p, TokenType type)
+{
+    return p->current.type == type;
+}
+
+
+static bool match(Parser* p, TokenType type)
+{
+    if (check(p, type))
+    {
+        advance(p);
+        return true;
+    }
+    return false;
+}
+
+
+static inline Token expect(Parser* p, TokenType type)
+{ 
+    if (check(p, type))
+        return advance(p);
+    fprintf(stderr, "Syntax error: expected token type %d\n", type);
+    exit(1);
+}
+
+
+static inline ASTNumberExpr* make_number_node(Arena* a, Token tok)
+{
+    ASTNumberExpr* n = arena_alloc(a, sizeof(ASTNumberExpr));
+    n->base.type = AST_EXPR_NUMBER;
+    n->token = tok;
+    return n;
+}
+
+
+static inline ASTIdentExpr* make_ident_node(Arena* a, Token tok)
+{
+    ASTIdentExpr* id = arena_alloc(a, sizeof(ASTIdentExpr));
+    id->base.type = AST_EXPR_IDENT;
+    id->token = tok;
+    return id;
+}
+
+
+inline ASTNode* parse_primary(Arena* a, Parser* p)
+{
+    if (check(p, TOK_NUMBER))
+    {
+        Token tok = advance(p);
+        return (ASTNode*)make_number_node(a, tok);
+    }
+
+    if (check(p, TOK_IDENTIFIER))
+    {
+        Token tok = advance(p);
+        return (ASTNode*)make_ident_node(a, tok);
+    }
+
+    fprintf(stderr, "Syntax error: unexpected token in line %d\n", p->current.line);
+    exit(1);
+}

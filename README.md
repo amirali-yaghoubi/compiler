@@ -14,7 +14,7 @@ Early development(front end). Not stable.
 ## Current progress
 - Lexer is done.
 - A linked-block arena allocator implemented
-- Parser in progress
+- Parser in progress (the initial data structures and helper functions are done)
 
 ## Build
 (to be added)
