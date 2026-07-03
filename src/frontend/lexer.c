@@ -1,4 +1,4 @@
-#include "lexer.h"
+#include "frontend/lexer.h"
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -355,7 +355,7 @@ static Token lex_number(Lexer* l, const char* start)
 }
 
 
-Token lex_next_token(Lexer* l)
+Token get_next_token(Lexer* l)
 {
     skip_white_space(l);
 
