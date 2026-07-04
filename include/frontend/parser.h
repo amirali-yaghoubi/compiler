@@ -68,4 +68,4 @@ typedef struct {
 
 const char *ASTTypeStr(ASTType type);
 void parser_init(Parser* p, Lexer* l);
-ASTNode* parse_primary(Arena* a, Parser* p);
+ASTNode* parse_expression(Arena* a, Parser* p);

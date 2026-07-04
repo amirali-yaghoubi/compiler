@@ -46,7 +46,7 @@ static inline bool check(Parser* p, TokenType type)
 }
 
 
-static bool match(Parser* p, TokenType type)
+static inline bool match(Parser* p, TokenType type)
 {
     if (check(p, type))
     {
@@ -84,7 +84,18 @@ static inline ASTIdentExpr* make_ident_node(Arena* a, Token tok)
 }
 
 
-inline ASTNode* parse_primary(Arena* a, Parser* p)
+static inline ASTBinaryExpr* make_binary_node(Arena* a, Token op, ASTNode* lhs, ASTNode* rhs)
+{
+    ASTBinaryExpr* bin = arena_alloc(a, sizeof(ASTBinaryExpr));
+    bin->base.type = AST_EXPR_BINARY;
+    bin->lhs = lhs;
+    bin->rhs = rhs;
+    bin->op = op;
+    return bin;
+}
+
+
+static inline ASTNode* parse_primary(Arena* a, Parser* p)
 {
     if (check(p, TOK_NUMBER))
     {
@@ -97,7 +108,54 @@ inline ASTNode* parse_primary(Arena* a, Parser* p)
         Token tok = advance(p);
         return (ASTNode*)make_ident_node(a, tok);
     }
+    
+    if (check(p, TOK_LEFT_PAREN))
+    {
+        advance(p);
+        ASTNode* expr = parse_expression(a, p);
+        expect(p, TOK_RIGHT_PAREN);
+        return expr;
+    }
 
     fprintf(stderr, "Syntax error: unexpected token in line %d\n", p->current.line);
     exit(1);
 }
+
+
+static inline ASTNode* parse_factor(Arena* a, Parser* p)
+{
+    Token op;
+    ASTNode* rhs;
+    ASTNode* lhs = parse_primary(a, p);
+
+    while (p->current.type == TOK_MULTIPLY || p->current.type == TOK_DIVIDE)
+    {
+        op = advance(p);
+        rhs = parse_primary(a, p);
+        lhs = (ASTNode*)make_binary_node(a, op, lhs, rhs);
+    }
+    return lhs;
+}
+
+
+static inline ASTNode* parse_term(Arena* a, Parser* p)
+{
+    Token op;
+    ASTNode* rhs;
+    ASTNode* lhs = parse_factor(a, p);
+
+    while (p->current.type == TOK_PLUS || p->current.type     == TOK_MINUS)
+    {
+        op = advance(p);
+        rhs = parse_factor(a, p);
+        lhs = (ASTNode*)make_binary_node(a, op, lhs, rhs);
+    }
+    return lhs;
+}
+
+
+
+ASTNode* parse_expression(Arena* a, Parser* p)
+{
+    return parse_term(a, p);
+}  

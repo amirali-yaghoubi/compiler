@@ -4,21 +4,64 @@
 #include <frontend/parser.h>
 
 
-int main(int argc, char *argv[])
+
+#include <stdio.h>
+
+static void print_ast(ASTNode* node)
 {
-    const char* source;
-    if (argc == 0)
+    if (!node) return;
+
+    switch (node->type)
     {
-        printf("Enter 1 number\n");
-        return 1;
+        case AST_EXPR_NUMBER:
+        {
+            ASTNumberExpr* n = (ASTNumberExpr*)node;
+            printf("%ld", n->token.value.int_value);
+            break;
+        }
+
+        case AST_EXPR_IDENT:
+        {
+            ASTIdentExpr* id = (ASTIdentExpr*)node;
+            printf("%s", TokenTypeStr(id->token.type));
+            break;
+        }
+
+        case AST_EXPR_BINARY:
+        {
+            ASTBinaryExpr* b = (ASTBinaryExpr*)node;
+
+            printf("(");
+            print_ast(b->lhs);
+
+            // چاپ operator
+            switch (b->op.type)
+            {
+                case TOK_PLUS:      printf(" + "); break;
+                case TOK_MINUS:     printf(" - "); break;
+                case TOK_MULTIPLY:  printf(" * "); break;
+                case TOK_DIVIDE:    printf(" / "); break;
+                default:            printf(" ? "); break;
+            }
+
+            print_ast(b->rhs);
+            printf(")");
+            break;
+        }
+
+        default:
+            printf("<unknown>");
+            break;
     }
-    if (argc > 2)
-    {
-        printf("Enter ONLY 1 number\n");
-        return 1;
-    } else {
-        source = argv[1];
-    }
+}
+
+
+
+
+
+int main()
+{
+    const char* source = "((2 + 3) * (4 + 5))";
 
     Arena arena = {0};
     arena_init(&arena);
@@ -30,8 +73,11 @@ int main(int argc, char *argv[])
     parser_init(&parser, &lexer);
 
 
-    ASTNode* node = parse_primary(&arena, &parser);
-    printf("Node type: %s\n", ASTTypeStr(node->type));
+    ASTNode* root = parse_expression(&arena, &parser);
+
+    print_ast(root);
+    printf("\n");
+
 
     return 0;
 }
