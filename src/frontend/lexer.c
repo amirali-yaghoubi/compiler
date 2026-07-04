@@ -246,9 +246,51 @@ static Token lex_punctuations(Lexer* l, const char* start)
     };
 }
 
-//includes NOT token(!)
+//Also includes NOT token(!)
 static Token lex_assignment_and_compare(Lexer* l, const char* start)
 {
+    if (*start == '>')
+    { 
+        l->current++;
+        if (*l->current == '=')
+        {
+            l->current++;
+            return (Token){
+                .type = TOK_GREATER_EQUAL,
+                .start = start,
+                .length = 2,
+                .line = l->line
+            };
+        }
+        return (Token){
+            .type = TOK_GREATER,
+            .start = start,
+            .length = 1,
+            .line = l->line
+        };
+    }
+
+    if (*start == '<')
+    { 
+        l->current++;
+        if (*l->current == '=')
+        {
+            l->current++;
+            return (Token){
+                .type = TOK_LESS_EQUAL,
+                .start = start,
+                .length = 2,
+                .line = l->line
+            };
+        }
+        return (Token){
+            .type = TOK_LESS,
+            .start = start,
+            .length = 1,
+            .line = l->line
+        };
+    }
+
     if (*start == '=')
     { 
         l->current++;
