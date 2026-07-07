@@ -32,7 +32,7 @@ void parser_init(Parser* p, Lexer* l)
 }
 
 
-static inline Token advance(Parser* p)
+static Token advance(Parser* p)
 {
     Token old = p->current;
     p->current = get_next_token(p->lexer);
@@ -40,13 +40,13 @@ static inline Token advance(Parser* p)
 }
 
 
-static inline bool check(Parser* p, TokenType type)
+static bool check(Parser* p, TokenType type)
 {
     return p->current.type == type;
 }
 
 
-static inline bool match(Parser* p, TokenType type)
+static bool match(Parser* p, TokenType type)
 {
     if (check(p, type))
     {
@@ -57,16 +57,16 @@ static inline bool match(Parser* p, TokenType type)
 }
 
 
-static inline Token expect(Parser* p, TokenType type)
+static Token expect(Parser* p, TokenType type)
 { 
     if (check(p, type))
         return advance(p);
-    fprintf(stderr, "Syntax error: expected token type %d\n", type);
+    fprintf(stderr, "Syntax error: expected token type %d in line %d\n", type, p->lexer->line);
     exit(1);
 }
 
 
-static inline ASTNumberExpr* make_number_node(Arena* a, Token tok)
+static ASTNumberExpr* make_number_node(Arena* a, Token tok)
 {
     ASTNumberExpr* n = arena_alloc(a, sizeof(ASTNumberExpr));
     n->base.type = AST_EXPR_NUMBER;
@@ -75,7 +75,7 @@ static inline ASTNumberExpr* make_number_node(Arena* a, Token tok)
 }
 
 
-static inline ASTIdentExpr* make_ident_node(Arena* a, Token tok)
+static ASTIdentExpr* make_ident_node(Arena* a, Token tok)
 {
     ASTIdentExpr* id = arena_alloc(a, sizeof(ASTIdentExpr));
     id->base.type = AST_EXPR_IDENT;
@@ -84,7 +84,7 @@ static inline ASTIdentExpr* make_ident_node(Arena* a, Token tok)
 }
 
 
-static inline ASTBinaryExpr* make_binary_node(Arena* a, Token op, ASTNode* lhs, ASTNode* rhs)
+static ASTBinaryExpr* make_binary_node(Arena* a, Token op, ASTNode* lhs, ASTNode* rhs)
 {
     ASTBinaryExpr* bin = arena_alloc(a, sizeof(ASTBinaryExpr));
     bin->base.type = AST_EXPR_BINARY;
@@ -95,7 +95,7 @@ static inline ASTBinaryExpr* make_binary_node(Arena* a, Token op, ASTNode* lhs, 
 }
 
 
-static inline ASTNode* parse_primary(Arena* a, Parser* p)
+static ASTNode* parse_primary(Arena* a, Parser* p)
 {
     if (check(p, TOK_NUMBER))
     {
@@ -122,7 +122,7 @@ static inline ASTNode* parse_primary(Arena* a, Parser* p)
 }
 
 
-static inline ASTNode* parse_factor(Arena* a, Parser* p)
+static ASTNode* parse_factor(Arena* a, Parser* p)
 {
     Token op;
     ASTNode* rhs;
@@ -138,13 +138,13 @@ static inline ASTNode* parse_factor(Arena* a, Parser* p)
 }
 
 
-static inline ASTNode* parse_term(Arena* a, Parser* p)
+ASTNode* parse_expression(Arena* a, Parser* p)
 {
     Token op;
     ASTNode* rhs;
     ASTNode* lhs = parse_factor(a, p);
 
-    while (p->current.type == TOK_PLUS || p->current.type     == TOK_MINUS)
+    while (p->current.type == TOK_PLUS || p->current.type == TOK_MINUS)
     {
         op = advance(p);
         rhs = parse_factor(a, p);
@@ -153,9 +153,3 @@ static inline ASTNode* parse_term(Arena* a, Parser* p)
     return lhs;
 }
 
-
-
-ASTNode* parse_expression(Arena* a, Parser* p)
-{
-    return parse_term(a, p);
-}  
