@@ -66,6 +66,17 @@ typedef struct {
 } ASTBinaryExpr;
 
 
+typedef struct {
+    ASTNode base;
+
+    Token name_token;
+
+    Token type_token;
+
+    ASTNode* initializer;
+} ASTVarDeclStmt;
+
+
 const char *ASTTypeStr(ASTType type);
 void parser_init(Parser* p, Lexer* l);
-ASTNode* parse_expression(Arena* a, Parser* p);
+ASTNode* parse_declaration(Arena* a, Parser* p);

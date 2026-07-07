@@ -31,7 +31,7 @@ void parser_init(Parser* p, Lexer* l)
     p->current = get_next_token(l);
 }
 
-
+//====Helpers====
 static Token advance(Parser* p)
 {
     Token old = p->current;
@@ -64,8 +64,10 @@ static Token expect(Parser* p, TokenType type)
     fprintf(stderr, "Syntax error: expected token type %d in line %d\n", type, p->lexer->line);
     exit(1);
 }
+//==== ====
 
 
+//====Node makers====
 static ASTNumberExpr* make_number_node(Arena* a, Token tok)
 {
     ASTNumberExpr* n = arena_alloc(a, sizeof(ASTNumberExpr));
@@ -94,6 +96,23 @@ static ASTBinaryExpr* make_binary_node(Arena* a, Token op, ASTNode* lhs, ASTNode
     return bin;
 }
 
+
+static ASTVarDeclStmt* make_vardecl_node(Arena* a, Token name_tok, Token type_tok, ASTNode* init)
+{
+    ASTVarDeclStmt* decl = arena_alloc(a, sizeof(ASTVarDeclStmt));
+
+    decl->base.type = AST_STMT_VARDECL;
+    decl->name_token = name_tok;
+    decl->type_token = type_tok;
+    decl->initializer = init;
+
+    return decl;
+}
+//==== ====
+
+
+
+static ASTNode* parse_expression(Arena* a, Parser* p);
 
 static ASTNode* parse_primary(Arena* a, Parser* p)
 {
@@ -138,7 +157,7 @@ static ASTNode* parse_factor(Arena* a, Parser* p)
 }
 
 
-ASTNode* parse_expression(Arena* a, Parser* p)
+static ASTNode* parse_expression(Arena* a, Parser* p)
 {
     Token op;
     ASTNode* rhs;
@@ -153,3 +172,17 @@ ASTNode* parse_expression(Arena* a, Parser* p)
     return lhs;
 }
 
+
+
+ASTNode* parse_declaration(Arena* a, Parser* p)
+{
+    expect(p, TOK_LET);
+    Token name_tok = expect(p, TOK_IDENTIFIER);
+    expect(p, TOK_COLON);
+    Token type_tok = expect(p, TOK_INT);
+    expect(p, TOK_ASSIGNMENT);
+    ASTNode* init = parse_expression(a, p);
+    expect(p, TOK_SEMICOLON);
+
+    return (ASTNode*)make_vardecl_node(a, name_tok, type_tok, init);
+}
