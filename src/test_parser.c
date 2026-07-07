@@ -10,14 +10,14 @@ void ast_dump(ASTNode* node, int depth);
 
 int main()
 {
-    const char* source = "let x_5 : int = 8 + 9 * 3 - (8 / 8 + 6 * 0);"; 
+    const char* source1 = "let x_5 : int = 8 + 9 * 3 - (8 / 8 + 6 * 0);"; 
 
 
     Arena arena = {0};
     arena_init(&arena);
 
     Lexer lexer = {0};
-    lexer_init(&lexer, source);
+    lexer_init(&lexer, source1);
 
     Parser parser = {0};
     parser_init(&parser, &lexer);
@@ -27,7 +27,17 @@ int main()
 
     ast_dump(root, 0);
 
-    ast_dump_json(root, "/root/proj/myLang/etc/ast.json");
+
+
+    const char* source2 = "x_6 = 8 + 9 * 3 - (8 / 8 + 6 * 0);"; 
+
+    lexer_init(&lexer, source2);
+    parser_init(&parser, &lexer);
+
+
+    root = parse_assignment(&arena, &parser);
+
+    ast_dump(root, 0);
 
 
     return 0;
@@ -72,6 +82,14 @@ void ast_dump(ASTNode* node, int depth) {
                    decl->name_token.length, decl->name_token.start,
                    decl->type_token.length, decl->type_token.start);
             ast_dump(decl->initializer, depth + 1);
+            break;
+        }
+        case AST_STMT_ASSIGNMENT: {
+            ASTAssignmentStmt* assign = (ASTAssignmentStmt*)node;
+            indent(depth);
+            printf("Assignment: %.*s =\n",
+                   assign->name_token.length, assign->name_token.start);
+            ast_dump(assign->value, depth + 1);
             break;
         }
         default:

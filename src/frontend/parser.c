@@ -108,6 +108,18 @@ static ASTVarDeclStmt* make_vardecl_node(Arena* a, Token name_tok, Token type_to
 
     return decl;
 }
+
+
+static ASTAssignmentStmt* make_assignment_node(Arena* a, Token name_tok, ASTNode* expr)
+{
+    ASTAssignmentStmt* assign = arena_alloc(a, sizeof(ASTAssignmentStmt));
+
+    assign->base.type = AST_STMT_ASSIGNMENT;
+    assign->name_token = name_tok;
+    assign->value = expr;
+
+    return assign;
+}
 //==== ====
 
 
@@ -185,4 +197,16 @@ ASTNode* parse_declaration(Arena* a, Parser* p)
     expect(p, TOK_SEMICOLON);
 
     return (ASTNode*)make_vardecl_node(a, name_tok, type_tok, init);
+}
+
+
+
+ASTNode* parse_assignment(Arena* a, Parser* p)
+{
+    Token name_tok = expect(p, TOK_IDENTIFIER);
+    expect(p, TOK_ASSIGNMENT);
+    ASTNode* expr = parse_expression(a, p);
+    expect(p, TOK_SEMICOLON);
+
+    return (ASTNode*)make_assignment_node(a, name_tok, expr);
 }

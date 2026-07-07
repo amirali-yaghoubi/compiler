@@ -20,6 +20,7 @@ typedef enum {
     AST_STMT_BLOCK,
     AST_STMT_RETURN,
     AST_STMT_VARDECL,
+    AST_STMT_ASSIGNMENT,
     AST_STMT_EXPR,
 
     //Expression
@@ -77,6 +78,16 @@ typedef struct {
 } ASTVarDeclStmt;
 
 
+typedef struct {
+    ASTNode base;
+
+    Token name_token;
+
+    ASTNode* value;
+} ASTAssignmentStmt;
+
+
 const char *ASTTypeStr(ASTType type);
 void parser_init(Parser* p, Lexer* l);
 ASTNode* parse_declaration(Arena* a, Parser* p);
+ASTNode* parse_assignment(Arena* a, Parser* p);
