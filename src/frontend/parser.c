@@ -9,18 +9,19 @@
 
 const char* ASTTypeStr(ASTType type) {
     switch (type) {
-        case AST_PROGRAM:        return "AST_PROGRAM";
-        case AST_STMT_IF:        return "AST_STMT_IF";
-        case AST_STMT_BLOCK:     return "AST_STMT_BLOCK";
-        case AST_STMT_RETURN:    return "AST_STMT_RETURN";
-        case AST_STMT_VARDECL:   return "AST_STMT_VARDECL";
-        case AST_STMT_EXPR:      return "AST_STMT_EXPR";
-        case AST_EXPR_BINARY:    return "AST_EXPR_BINARY";
-        case AST_EXPR_UNARY:     return "AST_EXPR_UNARY";
-        case AST_EXPR_CALL:      return "AST_EXPR_CALL";
-        case AST_EXPR_NUMBER:    return "AST_EXPR_NUMBER";
-        case AST_EXPR_IDENT:     return "AST_EXPR_IDENT";
-        default:                 return "INVALID_AST_TYPE";
+        case AST_PROGRAM:         return "AST_PROGRAM";
+        case AST_STMT_IF:         return "AST_STMT_IF";
+        case AST_STMT_BLOCK:      return "AST_STMT_BLOCK";
+        case AST_STMT_RETURN:     return "AST_STMT_RETURN";
+        case AST_STMT_VARDECL:    return "AST_STMT_VARDECL";
+        case AST_STMT_ASSIGNMENT: return "AST_STMT_ASSIGNMENT";
+        case AST_STMT_EXPR:       return "AST_STMT_EXPR";
+        case AST_EXPR_BINARY:     return "AST_EXPR_BINARY";
+        case AST_EXPR_UNARY:      return "AST_EXPR_UNARY";
+        case AST_EXPR_CALL:       return "AST_EXPR_CALL";
+        case AST_EXPR_NUMBER:     return "AST_EXPR_NUMBER";
+        case AST_EXPR_IDENT:      return "AST_EXPR_IDENT";
+        default:                  return "INVALID_AST_TYPE";
     }
 }
 
@@ -31,7 +32,7 @@ void parser_init(Parser* p, Lexer* l)
     p->current = get_next_token(l);
 }
 
-//====Helpers====
+//====Larsing helpers====
 static Token advance(Parser* p)
 {
     Token old = p->current;
@@ -63,8 +64,10 @@ static Token expect(Parser* p, TokenType type)
         return advance(p);
     fprintf(stderr, "Syntax error: expected token type %d in line %d\n", type, p->lexer->line);
     exit(1);
+    return (Token){0}; // unreachable, satisfies the compiler
 }
 //==== ====
+
 
 
 //====Node makers====
@@ -119,6 +122,17 @@ static ASTAssignmentStmt* make_assignment_node(Arena* a, Token name_tok, ASTNode
     assign->value = expr;
 
     return assign;
+}
+
+
+static ASTBlock* make_block_node(Arena* a, ASTBlockStmt* first)
+{
+    ASTBlock* block = arena_alloc(a, sizeof(ASTBlock));
+
+    block->base.type = AST_STMT_BLOCK;
+    block->first = first;
+
+    return block;
 }
 //==== ====
 
@@ -186,7 +200,7 @@ static ASTNode* parse_expression(Arena* a, Parser* p)
 
 
 
-ASTNode* parse_declaration(Arena* a, Parser* p)
+static ASTNode* parse_declaration(Arena* a, Parser* p)
 {
     expect(p, TOK_LET);
     Token name_tok = expect(p, TOK_IDENTIFIER);
@@ -194,19 +208,67 @@ ASTNode* parse_declaration(Arena* a, Parser* p)
     Token type_tok = expect(p, TOK_INT);
     expect(p, TOK_ASSIGNMENT);
     ASTNode* init = parse_expression(a, p);
-    expect(p, TOK_SEMICOLON);
 
     return (ASTNode*)make_vardecl_node(a, name_tok, type_tok, init);
 }
 
 
 
-ASTNode* parse_assignment(Arena* a, Parser* p)
+static ASTNode* parse_assignment(Arena* a, Parser* p)
 {
     Token name_tok = expect(p, TOK_IDENTIFIER);
     expect(p, TOK_ASSIGNMENT);
     ASTNode* expr = parse_expression(a, p);
-    expect(p, TOK_SEMICOLON);
 
     return (ASTNode*)make_assignment_node(a, name_tok, expr);
+}
+
+
+
+ASTNode* parse_statement(Arena* a, Parser* p)
+{
+    ASTNode* stmt;
+
+    if (check(p, TOK_LET)) {
+        stmt = parse_declaration(a, p);
+    } else if (check(p, TOK_IDENTIFIER)) {
+        stmt = parse_assignment(a, p);
+    } else {
+        stmt = parse_expression(a, p);
+    }
+
+    expect(p, TOK_SEMICOLON);
+
+    return stmt;
+}
+
+
+
+ASTNode* parse_block(Arena* a, Parser* p)
+{
+    expect(p, TOK_LEFT_BRACE);
+
+    ASTBlockStmt* first = NULL;
+    ASTBlockStmt* last = NULL;
+
+    while (!check(p, TOK_RIGHT_BRACE) && !check(p, TOK_EOF))
+    {
+        ASTNode* stmt = parse_statement(a, p);
+
+        ASTBlockStmt* node = arena_alloc(a, sizeof(ASTBlockStmt));
+
+        node->node = stmt;
+        node->next = NULL;
+
+        if (last == NULL) {
+            first = node; // first statement
+        } else {
+            last->next = node; // link previous tail to new node
+        }
+        last = node; // new node becomes the tail
+    }
+
+    expect(p, TOK_RIGHT_BRACE);
+
+    return (ASTNode*)make_block_node(a, first);
 }
