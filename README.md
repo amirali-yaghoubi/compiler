@@ -14,7 +14,7 @@ Early development(front end). Not stable.
 ## Current progress
 - Lexer is done.
 - A linked-block arena allocator implemented
-- Parser in progress (Expression parser with precedence and parentheses is implemented and working)
+- Parser in progress (Statement parser + block parser imlemented)
 
 ## Build
 (to be added)
