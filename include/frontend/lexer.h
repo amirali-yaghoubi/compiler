@@ -55,7 +55,7 @@ typedef struct {
 } Lexer;
 
 
-const char *TokenTypeStr(TokenType t);
+const char *token_type_to_str(TokenType t);
 
 void lexer_init(Lexer* lexer, const char* source);
 

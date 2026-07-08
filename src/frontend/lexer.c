@@ -25,7 +25,7 @@ void lexer_init(Lexer* lexer, const char* source)
 
 
 //Just a simple helper for printing the TokenType(s) and debug
-const char *TokenTypeStr(TokenType t) {
+const char *token_type_to_str(TokenType t) {
     switch (t) {
         case TOK_INT:            return "TOK_INT";
 
