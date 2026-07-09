@@ -1,4 +1,5 @@
 #include "frontend/lexer.h"
+#include "common/arena.h"
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -67,6 +68,19 @@ const char *token_type_to_str(TokenType t) {
 }
 
 
+
+const char* token_to_str(Arena* a, const char* start, int len)
+{
+    char* str = arena_alloc(a, len + 1);
+
+    memcpy(str, start, len);
+    str[len] = '\0';
+
+    return str;
+}
+
+
+
 static TokenType check_keyword(const char* start, int length)
 {
     if (length == 3 && strncmp(start, "let", 3) == 0)
@@ -81,7 +95,7 @@ static TokenType check_keyword(const char* start, int length)
     if (length == 5 && strncmp(start, "while", 5) == 0)
         return TOK_WHILE;
 
-    if (length == 2 && strncmp(start, "fn", 2) == 0)
+    if (length == 4 && strncmp(start, "func", 4) == 0)
         return TOK_FUNCTION;
 
     if (length == 3 && strncmp(start, "int", 3) == 0)
