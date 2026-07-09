@@ -1,4 +1,5 @@
 #pragma once
+#include "common/arena.h"
 
 
 typedef enum {
@@ -56,8 +57,7 @@ typedef struct {
 
 
 const char *token_type_to_str(TokenType t);
-
+const char* token_to_str(Arena* a, const char* start, int len);
 void lexer_init(Lexer* lexer, const char* source);
-
 Token get_next_token(Lexer* lexer);
 
