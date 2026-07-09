@@ -1,50 +1,61 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include "lexer.h"
+#include "common/arena.h"
+#include "frontend/lexer.h"
 
 
-char* read_file(const char* path);
 
+const char* source_path = "test/test_source_code.txt";
+
+
+char* read_file(Arena* a, const char* path);
+
+//============
 int main()
 {
-    const char* valid_source_path = "src/valid.txt";
+    Arena a = {0};
+    arena_init(&a);
 
+    char* source = read_file(&a, source_path);
 
-    char* source = read_file(valid_source_path);
-    if (!source)
+    printf("Source code:\n");
+    printf("______________________________\n");
+    printf("%s\n", source);
+    printf("______________________________\n\n\n");
+    printf("Lexer:\n");
+    printf("______________________________\n");
+
+    Lexer l = {0};
+    lexer_init(&l, source);
+
+    printf("%-4s %-20s %-15s %-10s %-5s\n",
+           "No", "Type", "Text", "Value", "Line");
+    printf("---------------------------------------------------------------\n");
+
+    int i = 0;
+    Token tok = {0};
+
+    while (tok.type != TOK_EOF)
     {
-        fprintf(stderr, "Failed to read %s\n", valid_source_path);
-        return 1;
+        tok = get_next_token(&l);
+
+        printf("%-4d %-20s %-15s ",
+               i++,
+               token_type_to_str(tok.type),
+               token_to_str(&a, tok.start, tok.length));
+
+        if (tok.type == TOK_NUMBER)
+            printf("%-10ld ", tok.value.int_value);
+        else
+            printf("%-10s ", "UNDEF");
+
+        printf("%-5d\n", tok.line);
     }
-
-
-    Lexer lexer = {0};
-    lexer_init(&lexer, source);
-
-    printf("source :\n%s\n", source);
-
-    while (1)
-    {
-    Token token = lex_next_token(&lexer);
-
-    if (token.type == TOK_EOF) break;
-    
-    printf("%-18s  length: %-7d  value: %-9ld  line: %-5d  start: %p\n",
-       TokenTypeStr((TokenType)token.type),
-       token.length,
-       token.value.int_value,
-       token.line,
-       token.start);
-
-    }
-
-    free(source);
 
     return 0;
 }
+//============
 
-
-char* read_file(const char* path)
+char* read_file(Arena* a, const char* path)
 {
     FILE* file = fopen(path, "rb");
     if (!file)
@@ -64,15 +75,22 @@ char* read_file(const char* path)
     size_t size = (size_t)size_temp;
     rewind(file);
 
-    char* buffer = malloc(size + 1);
+    char* buffer = arena_alloc(a, size + 1);
     if (!buffer)
     {
         fclose(file);
-        fprintf(stderr, "Error in allocating memory\n");
+        fprintf(stderr, "Error in allocating memory from arena\n");
         return NULL;
     }
 
-    fread(buffer, 1, size, file);
+    size_t read = fread(buffer, 1, size, file);
+    if (read != size)
+    {
+        fclose(file);
+        fprintf(stderr, "Error reading file\n");
+        return NULL;
+    }
+
     buffer[size] = '\0';
     fclose(file);
     return buffer;
