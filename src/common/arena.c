@@ -1,5 +1,5 @@
-#ifndef ARENA_BLOCK_SIZE
-#define ARENA_BLOCK_SIZE (32 * 1024)
+#ifndef ARENA_MIN_BLOCK_SIZE
+#define ARENA_MIN_BLOCK_SIZE (32 * 1024)
 #endif
 
 #include "common/arena.h"
@@ -32,7 +32,7 @@ static inline ArenaBlock* create_new_arena_block(size_t size)
 
 inline bool arena_init(Arena* a)
 {
-    ArenaBlock* block = create_new_arena_block(ARENA_BLOCK_SIZE);
+    ArenaBlock* block = create_new_arena_block(ARENA_MIN_BLOCK_SIZE);
     if (!block)
         return false;
 
@@ -50,15 +50,18 @@ inline void* arena_alloc(Arena* a, size_t size)
 
     if (a->current->offset + size > a->current->capacity)
     {
-        ArenaBlock* block = create_new_arena_block(ARENA_BLOCK_SIZE);
+        size_t block_size = (size > ARENA_MIN_BLOCK_SIZE) ? size : ARENA_MIN_BLOCK_SIZE;
+        ArenaBlock* block = create_new_arena_block(block_size);
         if (!block)
+        {
+            fprintf(stderr, "Error in allocating memory\n");
+            exit(1);
             return NULL;
-
-
+        }
         a->current->next = block;
         a->current = block;
-
     }
+
     void* ptr = a->current->memory + a->current->offset;
     a->current->offset += size;
 
