@@ -12,12 +12,6 @@ typedef struct {
 } Parser;
 
 
-typedef struct ASTBlockStmt {
-    ASTNode* node;
-    struct ASTBlockStmt* next;
-} ASTBlockStmt;
-
-
 typedef enum {
     AST_PROGRAM,
 
@@ -41,6 +35,12 @@ typedef enum {
 typedef struct ASTNode {
     ASTType type;
 } ASTNode;
+
+
+typedef struct ASTBlockStmt {
+    ASTNode* node;
+    struct ASTBlockStmt* next;
+} ASTBlockStmt;
 
 
 typedef struct {
@@ -102,3 +102,5 @@ const char *ASTTypeStr(ASTType type);
 void parser_init(Parser* p, Lexer* l);
 ASTNode* parse_statement(Arena* a, Parser* p);
 ASTNode* parse_block(Arena* a, Parser* p);
+ASTNode* parse_declaration(Arena* a, Parser* p);
+ASTNode* parse_assignment(Arena* a, Parser* p);
