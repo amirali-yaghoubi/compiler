@@ -32,7 +32,7 @@ void parser_init(Parser* p, Lexer* l)
     p->current = get_next_token(l);
 }
 
-//====Larsing helpers====
+//====Parsing helpers====
 static Token advance(Parser* p)
 {
     Token old = p->current;
@@ -183,7 +183,7 @@ static ASTNode* parse_factor(Arena* a, Parser* p)
 }
 
 
-static ASTNode* parse_expression(Arena* a, Parser* p)
+static ASTNode* parse_term(Arena* a, Parser* p)
 {
     Token op;
     ASTNode* rhs;
@@ -196,6 +196,13 @@ static ASTNode* parse_expression(Arena* a, Parser* p)
         lhs = (ASTNode*)make_binary_node(a, op, lhs, rhs);
     }
     return lhs;
+}
+
+
+
+static ASTNode* parse_expression(Arena* a, Parser* p)
+{
+    return parse_term(a, p);
 }
 
 
