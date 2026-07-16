@@ -66,6 +66,18 @@ static Token expect(Parser* p, TokenType type)
     exit(1);
     return (Token){0}; // unreachable, satisfies the compiler
 }
+
+
+
+static bool is_comparison_operator(TokenType type)
+{
+    return type == TOK_GREATER ||
+           type == TOK_LESS ||
+           type == TOK_GREATER_EQUAL ||
+           type == TOK_LESS_EQUAL ||
+           type == TOK_EQUAL_EQUAL ||
+           type == TOK_NOT_EQUAL;
+}
 //==== ====
 
 
@@ -200,9 +212,24 @@ static ASTNode* parse_term(Arena* a, Parser* p)
 
 
 
+static ASTNode* parse_comparison(Arena* a, Parser* p)
+{
+    ASTNode* lhs = parse_term(a, p);
+
+    while (is_comparison_operator(p->current.type))
+    {
+        Token op = advance(p);
+        ASTNode* rhs = parse_term(a, p);
+        lhs = (ASTNode*)make_binary_node(a, op, lhs, rhs);
+    }
+    return lhs;
+}
+
+
+
 static ASTNode* parse_expression(Arena* a, Parser* p)
 {
-    return parse_term(a, p);
+    return parse_comparison(a, p);
 }
 
 
